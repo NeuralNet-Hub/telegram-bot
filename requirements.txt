@@ -1,0 +1,12 @@
+# Requirments from neuralnet.solutions
+
+# Base
+python-telegram-bot>=21.0
+
+# Development
+python-dotenv>=1.0.0 # dotenv library
+
+# DDBB
+psycopg
+psycopg2-binary
+pandas
