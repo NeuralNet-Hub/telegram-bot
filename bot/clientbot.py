@@ -32,10 +32,39 @@ class ChatBot():
         # My settings
         self.num_ctx = 8192
         self.max_tokens = 4096
-        self.model = 'MistralGPT'
+        self.model = 'gpt-3.5-turbo'
         
         # DDBB management
         self.dbmanager = dbmanager
+    
+    def bot_signin(self, effective_user):
+        
+        logging.info(f'New user with following data: {effective_user}')
+        
+        # Get infor from user
+        name = f'{effective_user.first_name} {effective_user.last_name}' # first_name + last_name if exists
+        email = f'{effective_user.username}_{effective_user.id}@telegramuser.com' # username if exists
+        password = f'{effective_user.username}_{effective_user.id}'
+        
+        # Create authentication in privateGPT
+        jwt_token = self.auths_signup(name, email, password)
+        api_key = self.auths_api_key(jwt_token)
+        chat_id = self.chats_new(user_message, jwt_token)
+        
+        
+        
+        # Save in bot database
+        saved = self.dbmanager.create_user(privategpt_user = email,
+                                           privategpt_jwt_token = jwt_token,
+                                           privategpt_api_key = api_key,
+                                           privategpt_last_telegram_chat_id = chat_id,
+                                           telegram_id = effective_user.id,
+                                           telegram_first_name = effective_user.first_name,
+                                           telegram_last_name = effective_user.last_name,
+                                           telegram_username = effective_user.username)
+        
+        return saved
+        
             
     
     def go_chat(self, user_message, effective_user):

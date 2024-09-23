@@ -26,8 +26,8 @@ logging.basicConfig(
 dbmanager = DatabaseManager(dbname = os.getenv("DB_NAME"),
                             user = os.getenv("DB_USER"),
                             password = os.getenv("DB_PASSWORD"),
-                            host="localhost",
-                            port="5432")
+                            host=os.getenv("DB_HOST"),
+                            port=os.getenv("DB_PORT"))
 
 # Connect to the database
 dbmanager.connect()
@@ -38,10 +38,21 @@ bot = ChatBot(dbmanager=dbmanager,
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text="""Hello! thanks for adding me, I am PrivateGPT a service create by NeuralNet (neuralnet.solutions).
+                                   
+I highly recommend you to login into privategpt.es so all your chats will synchronize. Use the command /login to get more information""")
     
 
 async def login(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    
+    user = dbmanager.get_user(update.effective_user.id)
+    if user is None:
+        dbmanager.get_user("6901649076")
+        
+    else:
+        
+        
     
     await context.bot.send_message(chat_id=update.effective_chat.id, text="OK if logged, KO if not")
     
