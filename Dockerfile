@@ -1,3 +1,7 @@
+# To Run
+# docker build -t bot_telegram .
+# docker run -d --restart unless-stopped --name bot_telegram bot_telegram
+
 # Using an official Python runtime as a parent image
 FROM python:3.9-slim
 

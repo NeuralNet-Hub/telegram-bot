@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  bot_telegram:
+    build: .
+    container_name: bot_telegram
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - BOT_TOKEN=${BOT_TOKEN}
+      - BASE_URL=${BASE_URL}
+      - PRIVATEGPT_ADMIN_TOKEN=${PRIVATEGPT_ADMIN_TOKEN}
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:13
+    container_name: bot_privategpt
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+volumes:
+  postgres_data:
