@@ -2,6 +2,7 @@
 
 # Base
 python-telegram-bot>=21.0
+requests
 
 # Development
 python-dotenv>=1.0.0 # dotenv library

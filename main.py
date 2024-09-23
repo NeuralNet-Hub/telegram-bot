@@ -26,8 +26,9 @@ logging.basicConfig(
 dbmanager = DatabaseManager(dbname = os.getenv("DB_NAME"),
                             user = os.getenv("DB_USER"),
                             password = os.getenv("DB_PASSWORD"),
-                            host="localhost",
-                            port="5432")
+                            host=os.getenv("DB_HOST"),
+                            port=os.getenv("DB_PORT"))
+
 
 # Connect to the database
 dbmanager.connect()
@@ -49,7 +50,7 @@ async def login(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     response = bot.go_chat(update.message.text, update.effective_user)
-      
+    
     await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
 
 

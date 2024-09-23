@@ -32,7 +32,7 @@ class ChatBot():
         # My settings
         self.num_ctx = 8192
         self.max_tokens = 4096
-        self.model = 'MistralGPT'
+        self.model = 'gpt-3.5-turbo'
         
         # DDBB management
         self.dbmanager = dbmanager
