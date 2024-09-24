@@ -15,6 +15,9 @@ docker exec -it bot_privategpt psql -U postgres -c "DROP DATABASE IF EXISTS bot_
 # Create the database
 docker exec -it $CONTAINER_NAME psql -U $DB_USER -c "CREATE DATABASE $DB_NAME;"
 
+# Truncate table if needs
+docker exec -it bot_privategpt psql -U ${DB_USER} -d ${DB_NAME} -c "TRUNCATE TABLE your_table_name;"
+
 # Connect to the database and create the table
 docker exec -it $CONTAINER_NAME psql -U $DB_USER -d $DB_NAME -c "
 CREATE TABLE users (
