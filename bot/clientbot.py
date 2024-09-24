@@ -36,35 +36,6 @@ class ChatBot():
         
         # DDBB management
         self.dbmanager = dbmanager
-    
-    def bot_signin(self, effective_user):
-        
-        logging.info(f'New user with following data: {effective_user}')
-        
-        # Get infor from user
-        name = f'{effective_user.first_name} {effective_user.last_name}' # first_name + last_name if exists
-        email = f'{effective_user.username}_{effective_user.id}@telegramuser.com' # username if exists
-        password = f'{effective_user.username}_{effective_user.id}'
-        
-        # Create authentication in privateGPT
-        jwt_token = self.auths_signup(name, email, password)
-        api_key = self.auths_api_key(jwt_token)
-        chat_id = self.chats_new(user_message, jwt_token)
-        
-        
-        
-        # Save in bot database
-        saved = self.dbmanager.create_user(privategpt_user = email,
-                                           privategpt_jwt_token = jwt_token,
-                                           privategpt_api_key = api_key,
-                                           privategpt_last_telegram_chat_id = chat_id,
-                                           telegram_id = effective_user.id,
-                                           telegram_first_name = effective_user.first_name,
-                                           telegram_last_name = effective_user.last_name,
-                                           telegram_username = effective_user.username)
-        
-        return saved
-        
             
     
     def go_chat(self, user_message, effective_user):
@@ -83,8 +54,6 @@ class ChatBot():
             jwt_token = self.auths_signup(name, email, password)
             api_key = self.auths_api_key(jwt_token)
             chat_id = self.chats_new(user_message, jwt_token)
-            
-            
             
             # Save in bot database
             saved = self.dbmanager.create_user(privategpt_user = email,
@@ -128,6 +97,60 @@ class ChatBot():
         
         return response['choices'][0]['message']['content']
     
+    
+    def login(self, jwt_token, effective_user):
+        
+        response = self.auths(jwt_token).json()
+        
+        try:
+            email = response["email"]
+            name = response["name"]
+            
+            api_key = self.auths_api_key(jwt_token)
+            chat_id = self.chats_new("", jwt_token)
+                        
+            # Save a new user
+            saved = self.dbmanager.update_user(privategpt_user = email,
+                                               privategpt_jwt_token = jwt_token,
+                                               privategpt_api_key = api_key,
+                                               privategpt_last_telegram_chat_id = chat_id,
+                                               telegram_id = effective_user.id,
+                                               telegram_first_name = effective_user.first_name,
+                                               telegram_last_name = effective_user.last_name,
+                                               telegram_username = effective_user.username)
+            
+            if saved:
+            
+                return name, email
+            else:
+                
+                return None, None
+        except:
+            return None, None
+
+        
+    def new_chat(self, effective_user):
+        
+        # Get user
+        user = self.dbmanager.get_user(effective_user.id)
+        jwt_token = user.privategpt_jwt_token[0]
+        chat_id = user.privategpt_last_telegram_chat_id[0]
+        
+        # Create a new chat and update in psql the new chat_id, so the old one will keep in privateGPT
+        try:
+            chat_id = self.chats_new("", jwt_token)
+            
+            self.dbmanager.update_user(telegram_id=effective_user.id,
+                                        privategpt_last_telegram_chat_id=chat_id)            
+            return True
+        except:
+            return False
+            
+        
+        
+        
+    
+    
     def auths_signup(self, name, email, password):
         
         url = f"{self.base_url}/api/v1/auths/signup"
@@ -146,24 +169,36 @@ class ChatBot():
         return jwt_token
     
     
-    def auths_signin(self, jwt_token):
-        url = f"{self.base_url}/api/v1/auths/signin"
-        
-        credentials = {
-            "email": f"{user_id}@telegramself.com",
-            "password": f"your-password-telegram-{user_id}"
-        }
-        
-        response = requests.post(url, json=credentials)
-        
-        token = response.json()['token']
-        
-        self.headers = {
-            'Authorization': f'Bearer {token}',
+    def auths(self, jwt_token):
+        url = f"{self.base_url}/api/v1/auths"
+                
+        headers = {
+            'Authorization': f'Bearer {jwt_token}',
             'Content-Type': 'application/json'
         }
         
-        # return token
+        response = requests.get(url, headers=headers)
+                
+        return response
+    
+    # def auths_signin(self, jwt_token):
+    #     url = f"{self.base_url}/api/v1/auths/signin"
+        
+    #     credentials = {
+    #         "email": f"{user_id}@telegramself.com",
+    #         "password": f"your-password-telegram-{user_id}"
+    #     }
+        
+    #     response = requests.post(url, json=credentials)
+        
+    #     token = response.json()['token']
+        
+    #     self.headers = {
+    #         'Authorization': f'Bearer {token}',
+    #         'Content-Type': 'application/json'
+    #     }
+        
+    #     return token
     
     def auths_api_key(self, jwt_token):
         url = f"{self.base_url}/api/v1/auths/api_key"
@@ -243,6 +278,20 @@ class ChatBot():
         
         return private_gpt_chat_id
     
+    
+    # def chats_delete(self, chat_id, jwt_token):
+        
+    #     url = f"{self.base_url}/api/v1/chats/{chat_id}"
+        
+    #     headers = {
+    #         'Authorization': f'Bearer {jwt_token}',
+    #         'Content-Type': 'application/json'
+    #     }
+        
+    #     response = requests.delete(url, headers=headers)      
+        
+    #     return response
+        
     
     
     # OpenAI functions
@@ -396,7 +445,7 @@ class ChatBot():
         if response.status_code == 200:
             return response.json()
         else:
-            logging.info(f'It looks like chat history is empty: Status: {response.status_code}, Response: {response.text}')
+            logging.info(f'Response from privateGPT: Status: {response.status_code}, Response: {response.text}')
             return []
         
 

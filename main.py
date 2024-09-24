@@ -4,6 +4,8 @@
 Created on Wed Aug 28 12:12:12 2024
 
 @author: henry
+
+# https://docs.python-telegram-bot.org/en/stable/telegram.bot.html#telegram.Bot.send_photo
 """
 
 from dotenv import load_dotenv
@@ -15,6 +17,7 @@ from telegram import Update
 from telegram.ext import filters, ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler
 from bot.clientbot import ChatBot
 from bot.dbmanager import DatabaseManager
+from common.constants import TelegramResponses
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -38,26 +41,45 @@ bot = ChatBot(dbmanager=dbmanager,
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
-    await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text="""Hello! thanks for adding me, I am PrivateGPT a service create by NeuralNet (neuralnet.solutions).
-                                   
-I highly recommend you to login into privategpt.es so all your chats will synchronize. Use the command /login to get more information""")
+    response = TelegramResponses.LOGIN
+    
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
+    
+    
+async def models(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    
+    response = TelegramResponses.MODELS.format(models_list="GPT3.5", current_model="GPT3.5")
+    
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
     
 
 async def login(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    
-    user = dbmanager.get_user(update.effective_user.id)
-    if user is None:
-        dbmanager.get_user("6901649076")
         
+    name, email = bot.login(jwt_token=context.args[0], effective_user = update.effective_user)
+    
+    if name and email:
+        response = TelegramResponses.LOGIN_SUCCESS.format(name=name, email=email)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
     else:
+        response = TelegramResponses.LOGIN_FAILURE
+        await context.bot.send_photo(chat_id=update.effective_chat.id, photo=open('common/jwt_token.jpg', 'rb'),caption=response)
+
         
+async def new_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
+    success = bot.new_chat(effective_user = update.effective_user)
     
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="OK if logged, KO if not")
+    if success:
+        response = TelegramResponses.NEW_CHAT_SUCCESS
+    else:
+        response = TelegramResponses.NEW_CHAT_FAILURE
     
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
+
+
     
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    #await update.message.photo[-1].get_file()
 
     response = bot.go_chat(update.message.text, update.effective_user)
       
@@ -71,16 +93,18 @@ if __name__ == '__main__':
     
     # Commands
     start_handler = CommandHandler('start', start)
-    
+    models_handler = CommandHandler('models', models)
     login_handler = CommandHandler('login', login)
+    new_chat_handler = CommandHandler('new_chat', new_chat)
     
-    
-    
-    
+    # Echo
     echo_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), echo)
     
+    # Add commands
     application.add_handler(start_handler)
+    application.add_handler(models_handler)
     application.add_handler(login_handler)
-    application.add_handler(echo_handler)    
+    application.add_handler(new_chat_handler)
+    application.add_handler(echo_handler)
     
     application.run_polling()
