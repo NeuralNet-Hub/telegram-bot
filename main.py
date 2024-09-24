@@ -82,7 +82,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     #await update.message.photo[-1].get_file()
 
     response = bot.go_chat(update.message.text, update.effective_user)
-      
+    
     await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
 
 

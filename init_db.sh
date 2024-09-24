@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Run docker if not exists
+# docker run --name $CONTAINER_NAME -e POSTGRES_PASSWORD=sk-18934948 -d -p 5433:5432 --restart unless-stopped postgres
+
 # Database connection details
 DB_NAME="bot_privategpt_db"
 DB_USER="postgres"
