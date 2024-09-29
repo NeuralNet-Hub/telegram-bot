@@ -21,7 +21,7 @@ services:
 
   postgres:
     image: postgres:13
-    container_name: bot_privategpt
+    container_name: bot_postgres_telegram
     restart: unless-stopped
     env_file:
       - .env

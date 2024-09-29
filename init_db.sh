@@ -7,7 +7,7 @@ export $(grep -v '^#' .env | xargs)
 DB_NAME=${DB_NAME}
 DB_USER=${DB_USER}
 DB_PASSWORD=${DB_PASSWORD}
-CONTAINER_NAME="bot_privategpt"
+CONTAINER_NAME="bot_postgres_telegram"
 
 # Drop database
 docker exec -it ${CONTAINER_NAME} psql -U ${DB_USER} -c "DROP DATABASE IF EXISTS ${DB_NAME};"
